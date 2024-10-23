@@ -21,13 +21,13 @@ jobs:
       run: cargo build --release
       
     - name: Run chat server
-      run: nohup cargo run --bin server 8080 &
+      run: nohup cargo run --bin server 8080 > server.log 2>&1 &
 
     - name: Wait for server to start
       run: sleep 15
     
     - name: Run chat client
-      run: nohup cargo run --bin client 127.0.0.1 8080 GithubActionUser &
+      run: nohup cargo run --bin client 127.0.0.1 8080 GithubActionUser > client.log 2>&1 &
 
     - name: Wait for server to respond
       run: sleep 15
@@ -37,3 +37,6 @@ jobs:
 
     - name: Stop server gracefully
       run: pkill -SIGINT server
+    
+    - name: Show the log
+      run: ls
