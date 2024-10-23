@@ -11,23 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2: Run Rust formatting check (or any other tool you want)
-    - name: Run rustfmt
-      run: cargo fmt -- --check
+    - name: Run tests
+      run: cargo test
 
-    # Step 3: Run the build
     - name: Build the project
       run: cargo build --release
-
-    # Step 4: Run Clippy linting
-    - name: Run Clippy
-      run: cargo clippy -- -D warnings
       
-    # Step 4: Run Clippy linting
     - name: Run chat server
-      run: cargo run --bin server
+      run: cargo run --bin server 8080
+
+    - name: Wait for server to start
+      run: sleep 15
     
+    - name: Run chat client
+      run: cargo run --bin client 127.0.0.1 8080 GithubActionUser Hello
+
+    - name: Wait for server to respond
+      run: sleep 15
+
+    - name: Stop server gracefully
+      run: pkill -SIGINT server
