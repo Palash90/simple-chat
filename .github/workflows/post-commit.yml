@@ -1,0 +1,33 @@
+name: Post-Commit Workflow
+
+# This workflow runs when code is pushed to the repository
+on:
+  push:
+    branches:
+      - main  # You can specify other branches here
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Run Rust formatting check (or any other tool you want)
+    - name: Run rustfmt
+      run: cargo fmt -- --check
+
+    # Step 3: Run the build
+    - name: Build the project
+      run: cargo build --release
+
+    # Step 4: Run Clippy linting
+    - name: Run Clippy
+      run: cargo clippy -- -D warnings
+      
+    # Step 4: Run Clippy linting
+    - name: Run chat server
+      run: cargo run --bin server
+    
