@@ -2,7 +2,7 @@
 
 # Run rustfmt to check and format the code
 echo "Running rustfmt..."
-cd chat && cargo fmt
+cargo fmt
 
 # Run cargo build to ensure the project compiles without errors
 echo "Checking if the project compiles..."
