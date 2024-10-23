@@ -1,5 +1,15 @@
 # Simple Chat
 
+## Disclaimer
+
+I am very new to Rust, and my knowledge of advanced concepts like Smart Pointers, Threads, Async, Tokio, etc., is limited at this point. The current implementation is purely based on the basics of Rust and a few Stack Overflow threads, along with fundamental TCP and networking concepts. I have largely drawn from my experience with Java, Python, .NET, and simple networking, attempting to translate those ideas into Rust as closely as possible.
+
+If you're interested, feel free to check out my other repository, which I implemented over time as I continue learning Rust. Follow this [link](https://github.com/Palash90/iron_learn) to take a look!
+
+## Demonstration
+https://youtu.be/241s5jh8eFM
+
+
 ## Summary
 
 You have been tasked with writing a simple asynchronous chat server and CLI
