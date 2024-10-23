@@ -1,13 +1,9 @@
 use std::io::{ErrorKind, Read, Write};
-use std::net::TcpListener;
+use std::net::{SocketAddr, TcpListener};
 use std::sync::mpsc;
 use std::{env, thread};
 
-const MSG_SIZE: usize = 32;
-
-fn sleep() {
-   // thread::sleep(::std::time::Duration::from_millis(100));
-}
+const MSG_SIZE: usize = 1024;
 
 fn main() {
     let address = match decode_input() {
@@ -17,32 +13,53 @@ fn main() {
 
     let server = start_server(address);
 
-    let mut clients = vec![];
-    let (tx, rx) = mpsc::channel::<String>();
+    let clients = vec![];
+    let (tx, rx) = mpsc::channel::<(String, std::net::SocketAddr)>();
 
+    wait_for_client(server, tx, clients, rx);
+}
+
+fn wait_for_client(
+    server: TcpListener,
+    tx: mpsc::Sender<(String, SocketAddr)>,
+    mut clients: Vec<std::net::TcpStream>,
+    rx: mpsc::Receiver<(String, SocketAddr)>,
+) -> ! {
     loop {
         if let Ok((socket, addr)) = server.accept() {
-            initiate_client(addr, &tx, &mut clients, socket);
+            initiate_clients(addr, &tx, &mut clients, socket);
         }
 
-        if let Ok(msg) = rx.try_recv() {
+        if let Ok((msg, sender_addr)) = rx.try_recv() {
+            // Receive both the message and sender's address
             clients = clients
                 .into_iter()
                 .filter_map(|mut client| {
-                    let mut buff = msg.clone().into_bytes();
-
-                    buff.resize(MSG_SIZE, 0);
-
-                    client.write_all(&buff).map(|_| client).ok()
+                    // Get the peer address to compare with the sender
+                    if let Ok(peer_addr) = client.peer_addr() {
+                        if peer_addr != sender_addr {
+                            // Skip sending to the sender
+                            let mut buff = msg.clone().into_bytes();
+                            buff.resize(MSG_SIZE, 0);
+                            client.write_all(&buff).map(|_| client).ok()
+                        } else {
+                            Some(client)
+                        }
+                    } else {
+                        None
+                    }
                 })
                 .collect::<Vec<_>>();
         }
-
-        sleep();
     }
 }
 
-fn initiate_client(addr: std::net::SocketAddr, tx: &mpsc::Sender<String>, clients: &mut Vec<std::net::TcpStream>, socket: std::net::TcpStream) {
+fn initiate_clients(
+    addr: std::net::SocketAddr,
+    tx: &mpsc::Sender<(String, SocketAddr)>,
+    clients: &mut Vec<std::net::TcpStream>,
+    socket: std::net::TcpStream,
+) {
     println!("Client {} connected", addr);
 
     let tx = tx.clone();
@@ -54,7 +71,7 @@ fn initiate_client(addr: std::net::SocketAddr, tx: &mpsc::Sender<String>, client
 fn read_client_message(
     mut socket: std::net::TcpStream,
     addr: std::net::SocketAddr,
-    tx: mpsc::Sender<String>,
+    tx: mpsc::Sender<(String, SocketAddr)>,
 ) {
     loop {
         let mut buff = vec![0; MSG_SIZE];
@@ -65,16 +82,14 @@ fn read_client_message(
                 let msg = String::from_utf8(msg).expect("Invalid utf8 message");
 
                 println!("{}: {:?}", addr, msg);
-                tx.send(msg).expect("failed to send msg to rx");
+                tx.send((msg, addr)).expect("failed to send msg to rx");
             }
             Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
             Err(_) => {
-                println!("closing connection with: {}", addr);
+                println!("Closing connection with: {}", addr);
                 break;
             }
         }
-
-        sleep();
     }
 }
 
@@ -83,6 +98,8 @@ fn start_server(address: String) -> TcpListener {
     server
         .set_nonblocking(true)
         .expect("failed to initialize non-blocking");
+    println!("Server started listening");
+    println!();
     server
 }
 

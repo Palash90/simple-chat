@@ -4,7 +4,7 @@ use std::sync::mpsc::{self, TryRecvError};
 use std::time::Duration;
 use std::{env, thread};
 
-const MSG_SIZE: usize = 32;
+const MSG_SIZE: usize = 1024;
 
 fn main() {
     let (address, user_name) = match initialize_client() {
@@ -18,10 +18,7 @@ fn main() {
 
     thread::spawn(move || read_server_message(client, rx));
 
-    match tx.send(format!("user {}", &user_name)) {
-        Ok(_) => continue_chatting(tx, &user_name),
-        Err(e) => println!("{}", e)
-    }
+    continue_chatting(tx, &user_name);
 }
 
 fn continue_chatting(tx: mpsc::Sender<String>, user: &str) {
@@ -33,9 +30,10 @@ fn continue_chatting(tx: mpsc::Sender<String>, user: &str) {
             .read_line(&mut buff)
             .expect("reading from stdin failed");
 
-        let msg = format!("{}:{}", user, buff.trim()) ;
+        let msg = buff.trim();
 
-        if msg == "leave" || tx.send(msg).is_err() {
+        if msg == "leave" || tx.send(format!("{}:{}", user, msg)).is_err() {
+            println!("Leave");
             break;
         }
     }
