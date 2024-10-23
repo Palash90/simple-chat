@@ -27,7 +27,7 @@ jobs:
       run: sleep 15
     
     - name: Run chat client
-      run: cargo run --bin client 127.0.0.1 8080 GithubActionUser
+      run: nohup cargo run --bin client 127.0.0.1 8080 GithubActionUser &
 
     - name: Wait for server to respond
       run: sleep 15
