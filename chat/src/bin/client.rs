@@ -1,5 +1,5 @@
 use chat::client;
 
-fn main(){
+fn main() {
     client::run();
 }
