@@ -33,7 +33,7 @@ fn continue_chatting(tx: mpsc::Sender<String>, user: &str) {
             .read_line(&mut buff)
             .expect("reading from stdin failed");
 
-        let msg = format!("{}:{}", user, buff.trim().to_string()) ;
+        let msg = format!("{}:{}", user, buff.trim()) ;
 
         if msg == "leave" || tx.send(msg).is_err() {
             break;
